@@ -9854,8 +9854,13 @@
                     if ( ( is_bool( $install->{$p} ) || ! empty( $install->{$p} ) ) &&
                          $install->{$p} != $v
                     ) {
-                        $install->{$p} = $v;
-                        $diff[ $p ]    = $v;
+                        if (
+                           'programming_language_version' !== $p ||
+                           $this->get_core_version($install->{$p}) != $this->get_core_version($v)
+                        ) {
+                            $install->{$p} = $v;
+                            $diff[ $p ]    = $v;
+                        }
                     }
                 } else {
                     $special[ $p ] = $v;
@@ -17154,7 +17159,7 @@
             $versions = array();
             $versions['platform_version']             = get_bloginfo( 'version' );
             $versions['sdk_version']                  = $this->version;
-            $versions['programming_language_version'] = phpversion();
+            $versions['programming_language_version'] = $this->get_php_core_version();
 
             foreach ( $versions as $k => $version ) {
                 if ( is_string( $versions[ $k ] ) && ! empty( $versions[ $k ] ) ) {
@@ -17163,6 +17168,34 @@
             }
 
             return $versions;
+        }
+
+        /**
+         * Get core PHP version (without pre-release or build).
+         *
+         * @return string
+         * @since  2.5.1
+         *
+         * @author Vova Feldman (@svovaf)
+         */
+        private function get_php_core_version() {
+            return $this->get_core_version( phpversion() );
+        }
+
+        /**
+         * Get core version stripped from pre-release and build.
+         *
+         * @return string
+         * @since  2.5.1
+         *
+         * @author Vova Feldman (@svovaf)
+         */
+        private function get_core_version( $version ) {
+            $pre_release_pos = strpos( $version, '-' );
+
+            return ( false === $pre_release_pos ) ?
+                $version :
+                substr( $version, 0, $pre_release_pos );
         }
 
         /**
